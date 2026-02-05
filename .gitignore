@@ -1,20 +1,19 @@
 # common
+.git
 .venv
+data
+node_modules
 build
 dist
 __pycache__
-results
-uploads
-models
-soy_AI_Analysis
 
 # api
-soy-api2/images
-soy-api2/results
-soy-api2/uploads
+api/images
+api/results
+api/uploads
+api/models
 
 # frontend
-soy-frontend2/assets
-soy-frontend2/node_modules
-soy-frontend2/public
-soy-frontend2/server
+frontend/assets
+frontend/public
+frontend/server
