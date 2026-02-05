@@ -21,7 +21,7 @@ const Sidebar = () => {
 
       <h3 className="text-textSecondary text-sm mb-md pl-sm">두유 처리</h3>
       <NavLink 
-        to="/soyanalysis"
+        to="/shootinganalysis"
         className={({ isActive }) => `
           flex items-center p-md rounded-md mb-sm text-textPrimary
           transition-colors duration-fast hover:bg-white/5

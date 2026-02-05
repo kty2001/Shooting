@@ -7,7 +7,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from app.routers import soyanalysis
+from api.app.routers import shootinganalysis
 
 # 경로 설정 (PyInstaller 패키징 고려)
 if getattr(sys, 'frozen', False):
@@ -18,15 +18,15 @@ else:
     BASE_DIR = Path(__file__).parent.parent.parent
 
 # 프론트엔드 빌드 디렉토리 경로
-FRONTEND_BUILD_DIR = BASE_DIR / "soy-frontend" / "build"
+FRONTEND_BUILD_DIR = BASE_DIR / "frontend" / "build"
 
 # 결과 및 업로드 디렉토리 설정
-UPLOADS_DIR = Path(tempfile.gettempdir()) / "soy_ai_system" / "uploads"
-RESULTS_DIR = Path(tempfile.gettempdir()) / "soy_ai_system" / "results"
+UPLOADS_DIR = Path(tempfile.gettempdir()) / "shooting_ai_system" / "uploads"
+RESULTS_DIR = Path(tempfile.gettempdir()) / "shooting_ai_system" / "results"
 
 print("app.main.py 진입")
 app = FastAPI(
-    title="Soymilk Processing System",
+    title="Shooting Analysis System",
     description="두유 농도계 시스템",
     version="2.0.0"
 )
@@ -41,9 +41,7 @@ app.add_middleware(
 )
 
 # 라우터 등록
-app.include_router(soyanalysis.router, prefix="/api/soyanalysis", tags=["Soy Analysis"])
-# app.include_router(soyvid.router, prefix="/api/soyvid", tags=["Soy Debluring Video"])
-# app.include_router(soymilk.router, prefix="/api/soymilk", tags=["Soy Debluring"])
+app.include_router(shootinganalysis.router, prefix="/api/shootinganalysis", tags=["Shooting Analysis"])
 
 # 정적 파일 서빙 (처리된 이미지 등을 저장)
 os.makedirs(UPLOADS_DIR, exist_ok=True)

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import FileDropzone from '../components/FileDropzone';
 import AnalysisResultDisplay from '../components/AnalysisResultDisplay';
-import { processSoyanalysis } from '../utils/api';
+import { processShootingAnalysis } from '../utils/api';
 import TakePicture from '../components/TakePicture';
 
-const SoyanalysisPage = () => {
+const ShootingAnalysisPage = () => {
   const [activeTab, setActiveTab] = useState("camera");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,7 @@ const SoyanalysisPage = () => {
     setResult(null);
 
     try {
-      const response = await processSoyanalysis(file, sigma);
+      const response = await processShootingAnalysis(file, sigma);
       setResult(response);
     } catch (err) {
       setError(err.message);
@@ -119,4 +119,4 @@ const SoyanalysisPage = () => {
   );
 };
 
-export default SoyanalysisPage;
+export default ShootingAnalysisPage;

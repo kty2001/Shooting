@@ -8,7 +8,7 @@ current_dir = Path(__file__).parent
 project_dir = current_dir.parent
 
 # 프론트엔드 빌드 디렉토리
-frontend_build_dir = project_dir / "soy-frontend2" / "build"
+frontend_build_dir = project_dir / "frontend" / "build"
 
 # 모델 디렉토리
 models_dir = current_dir / "models"
@@ -31,7 +31,7 @@ except Exception as e:
 # 프론트엔드 빌드 확인
 if not frontend_build_dir.exists():
     print("프론트엔드 빌드 디렉토리를 찾을 수 없습니다.")
-    print("먼저 'cd soy-frontend2 && npm run build' 명령을 실행하세요.")
+    print("먼저 'cd frontend && npm run build' 명령을 실행하세요.")
     exit(1)
 
 # # 모델 파일 확인
@@ -133,7 +133,7 @@ a = Analysis(
     binaries=[],
     datas=[
         (r'{models_dir_str}', 'models'),
-        (r'{frontend_build_dir_str}', 'soy-frontend2/build'),
+        (r'{frontend_build_dir_str}', 'frontend/build'),
         (r'{str(current_dir / "app")}', 'app'),
     ],
     hiddenimports=[
@@ -145,7 +145,7 @@ a = Analysis(
         'uvicorn.protocols.websockets.auto',
         'uvicorn.lifespan',
         'uvicorn.lifespan.on',
-        'app.routers.soyanalysis',
+        'app.routers.shootinganalysis',
         'http.server',
     ],
     hookspath=[],
@@ -165,7 +165,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='soy_AI_Analysis',
+    name='Shooting_AI_Analysis',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -187,27 +187,27 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='soy_AI_Analysis',
+    name='Shooting_AI_Analysis',
 )
 """
 
 # 스펙 파일 저장 - UTF-8 인코딩 명시
-spec_file = current_dir / "soy_AI_Analysis.spec"
+spec_file = current_dir / "Shooting_AI_Analysis.spec"
 with open(spec_file, "w", encoding="utf-8") as f:
     f.write(spec_content)
 
 print("PyInstaller 스펙 파일이 생성되었습니다.")
 print("다음 명령을 실행하여 EXE 파일을 생성하세요:")
-print(f"cd {current_dir} && pyinstaller --debug=all soy_AI_Analysis.spec")
+print(f"cd {current_dir} && pyinstaller --debug=all Shooting_AI_Analysis.spec")
 
 # 자동으로 PyInstaller 실행
 print("PyInstaller 실행 중...")
 os.chdir(current_dir)
-os.system("pyinstaller soy_AI_Analysis.spec")
+os.system("pyinstaller Shooting_AI_Analysis.spec")
 
 print("\n빌드가 완료되었습니다.")
-print(f"실행 파일 위치: {dist_dir / 'soy_AI_Analysis' / 'soy_AI_Analysis.exe'}") 
+print(f"실행 파일 위치: {dist_dir / 'Shooting_AI_Analysis' / 'Shooting_AI_Analysis.exe'}") 
 
 print(f"\n실행 후 다음 로그 파일을 확인하세요:")
-print(f"- {dist_dir / 'soy_AI_Analysis' / 'startup.log'}")
-print(f"- {dist_dir / 'soy_AI_Analysis' / 'error.log'}")
+print(f"- {dist_dir / 'Shooting_AI_Analysis' / 'startup.log'}")
+print(f"- {dist_dir / 'Shooting_AI_Analysis' / 'error.log'}")

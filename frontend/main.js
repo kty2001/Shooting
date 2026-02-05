@@ -10,7 +10,7 @@ const isDev = require('electron-is-dev'); // 더 확실한 개발 환경 감지
 const devServerUrl = 'http://localhost:9879';
 let serverProcess = null;
 
-const exePath = path.join(__dirname, 'server', 'soy_AI_Analysis.exe');
+const exePath = path.join(__dirname, 'server', 'Shooting_AI_Analysis.exe');
 
 function startServer() {
   if (fs.existsSync(exePath)) {
@@ -34,7 +34,7 @@ function stopServer() {
     try {
       if (process.platform === 'win32') {
         const { exec } = require('child_process');
-        exec('taskkill /IM soy_AI_Analysis.exe /F', (err, stdout, stderr) => {
+        exec('taskkill /IM Shooting_AI_Analysis.exe /F', (err, stdout, stderr) => {
           if (err) {
             console.error('서버 종료 실패:', err);
           } else {
@@ -59,7 +59,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1600,
     height: 900,
-    icon: path.join(__dirname, 'build', 'syfood_logo.ico'),
+    icon: path.join(__dirname, 'build', 'target_logo.ico'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

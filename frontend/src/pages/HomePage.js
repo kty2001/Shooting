@@ -13,7 +13,7 @@ const HomePage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg mt-xl">
         <Link 
-          to="/soyanalysis"
+          to="/shootinganalysis"
           className="bg-surface rounded-md p-lg shadow-md hover:-translate-y-1 hover:shadow-lg transition-all duration-fast flex flex-col items-center text-center"
         >
           <div className="text-5xl text-primary mb-md">

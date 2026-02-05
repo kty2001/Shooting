@@ -1,11 +1,11 @@
 {
-  "name": "soy-frontend",
-  "version": "0.0.18",
+  "name": "shoot-frontend",
+  "version": "0.0.1",
   "private": true,
   "main": "main.js",
   "homepage": ".",
-  "author": "soy AI Team",
-  "description": "soy AI Processing System",
+  "author": "Shooting AI Team",
+  "description": "Shooting AI Analysis System",
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -68,8 +68,8 @@
   "proxy": "http://localhost:8000",
   "build": {
     "appId": "com.soy.viewer",
-    "icon": "build/syfood_logo.ico",
-    "productName": "soy AI System Light_mk2",
+    "icon": "build/target_logo.ico",
+    "productName": "Shooting AI System",
     "files": [
       "main.js",
       "build/**/*",
@@ -83,7 +83,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "build/syfood_logo.ico",
+      "icon": "build/target_logo.ico",
       "signAndEditExecutable": true
     },
     "nsis": {
@@ -91,9 +91,9 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "deleteAppDataOnUninstall": true,
-      "shortcutName": "soy AI System",
-      "installerIcon": "build/syfood_logo.ico",
-      "uninstallerIcon": "build/syfood_logo.ico"
+      "shortcutName": "target AI System",
+      "installerIcon": "build/target_logo.ico",
+      "uninstallerIcon": "build/target_logo.ico"
     },
     "electronVersion": "24.8.8",
     "asar": false,
