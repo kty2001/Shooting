@@ -7,7 +7,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from api.app.routers import shootinganalysis
+from app.routers import shootinganalysis
 
 # 경로 설정 (PyInstaller 패키징 고려)
 if getattr(sys, 'frozen', False):

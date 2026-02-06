@@ -3,7 +3,7 @@ import axios from 'axios';
 // const API_URL = process.env.REACT_APP_API_URL || '';
 const API_URL = 'http://localhost:8000';
 
-export const processShootinganalysis = async (file, sigma) => {
+export const processShootingAnalysis = async (file, sigma) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('sigma', sigma);
