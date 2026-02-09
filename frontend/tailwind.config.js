@@ -52,6 +52,7 @@ module.exports = {
         textSecondary: '#404040',  // gray-700
         textMuted: '#737373',      // gray-500
         textLight: '#a3a3a3',      // gray-400
+        textWhite: '#FFFFFF',      // gray-0
 
         /* Borders */
         border: {

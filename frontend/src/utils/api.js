@@ -17,7 +17,7 @@ export const processShootingAnalysis = async (file, sigma) => {
     console.log('shootinganalysis 응답:', response.data)
     return response.data;
   } catch (error) {
-    let message = "두유 분석 중 오류가 발생했습니다.";
+    let message = "탄착 분석 중 오류가 발생했습니다.";
     if (error.response?.data?.detail) {
       message = error.response.data.detail;
       
