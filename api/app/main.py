@@ -9,6 +9,7 @@ from pathlib import Path
 
 from app.routers import shootinganalysis
 
+
 # 경로 설정 (PyInstaller 패키징 고려)
 if getattr(sys, 'frozen', False):
     # PyInstaller로 패키징된 경우
@@ -28,7 +29,7 @@ print("app.main.py 진입")
 app = FastAPI(
     title="Shooting Analysis System",
     description="두유 농도계 시스템",
-    version="2.0.0"
+    version="1.0.0"
 )
 
 # CORS 설정

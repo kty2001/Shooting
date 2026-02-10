@@ -6,8 +6,8 @@ import numpy as np
 from PIL import Image
 from pathlib import Path
 import uuid
-import matplotlib.pyplot as plt
-from scipy import signal as scipy_signal
+# import matplotlib.pyplot as plt
+# from scipy import signal as scipy_signal
 
 
 # class THzOnnxPredictor:
