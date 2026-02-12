@@ -108,20 +108,40 @@ const ShootingAnalysisPage = () => {
                       }}
                     />
                   ))}
+
+                  {/* COI 표시 (X 마커) */}
+                  {result && (
+                    <div
+                      className="absolute text-red-500 font-bold text-xl select-none"
+                      style={{
+                        left: `${result.coi[0] * 256}px`,
+                        top: `${result.coi[1] * 256}px`,
+                        transform: "translate(-50%, -50%)",
+                        zIndex: 20,
+                      }}
+                    >
+                      ✕
+                    </div>
+                  )}
                 </div>
 
                 {/* Result Box */}
-                <div className="border-2 border-black rounded-2xl p-6 flex-1">
+                <div className="relative border-2 border-black rounded-2xl p-6 w-full pt-14">
                   {result && (
                     <>
-                      <p>
-                        COI: ({result.coi[0].toFixed(2)}, {result.coi[1].toFixed(2)}) /
-                        TTF: {result.ttf.toFixed(2)}
-                      </p>
-                      <p>
-                        MR: {result.mean_radius.toFixed(3)} /
-                        STD: ({result.std[0].toFixed(3)}, {result.std[1].toFixed(3)})
-                      </p>
+                      <h3 className="text-2xl font-bold text-black absolute top-3 left-5">
+                        Result Box
+                      </h3>
+                      <div className="flex flex-col justify-center items-center text-center h-full">
+                        <p>
+                          COI: ({result.coi[0].toFixed(2)}, {result.coi[1].toFixed(2)}) /
+                          TTF: {result.ttf.toFixed(2)}
+                        </p>
+                        <p>
+                          MR: {result.mean_radius.toFixed(3)} /
+                          STD: ({result.std[0].toFixed(3)}, {result.std[1].toFixed(3)})
+                        </p>
+                      </div>
                     </>
                   )}
                 </div>
@@ -141,8 +161,9 @@ const ShootingAnalysisPage = () => {
                         <span className="font-bold">
                           {result.major_error[0].major_error_name}
                         </span>
-                        입니다.<br />
-                        신뢰도: {(result.major_error[0].confidence * 100).toFixed(0)}%
+                        입니다.
+                        (신뢰도: {(result.major_error[0].confidence * 100).toFixed(0)}%)<br />
+                        {result.analysis_text}
                       </p>
                     </>
                   )}
@@ -156,12 +177,10 @@ const ShootingAnalysisPage = () => {
                         Feedback Box
                       </h3>
                       <p className="text-gray-700 leading-relaxed">
-                        추천 드릴:{" "}
-                        <span className="font-bold">
+                        {/* 추천 드릴:{" "}
+                        <span className="font-bold"> */}
                           {result.recommend_text}
-                        </span>
-                        <br/>
-                        그립 안정성과 손바닥 압력 분산을 중심으로 훈련하세요.
+                        {/* </span> */}
                       </p>
                     </>
                   )}

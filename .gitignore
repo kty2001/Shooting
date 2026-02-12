@@ -1,6 +1,7 @@
 # common
 .git
 .venv
+.env
 data
 node_modules
 build

@@ -6,9 +6,11 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+from dotenv import load_dotenv
 
 from app.routers import shootinganalysis
 
+load_dotenv()
 
 # 경로 설정 (PyInstaller 패키징 고려)
 if getattr(sys, 'frozen', False):
