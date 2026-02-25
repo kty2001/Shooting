@@ -132,7 +132,6 @@ a = Analysis(
     pathex=[r'{current_dir_str}'],
     binaries=[],
     datas=[
-        (r'{models_dir_str}', 'models'),
         (r'{frontend_build_dir_str}', 'frontend/build'),
         (r'{str(current_dir / "app")}', 'app'),
     ],

@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import math
 import io
@@ -12,13 +13,17 @@ from fastapi import Request, APIRouter, UploadFile, File, HTTPException, Form
 from openai import AzureOpenAI
 
 from app.models.schemas import ShootingResult, MajorError, ShootingAnalysisRequest, ShootingAnalysisResponse, ErrorResponse
+from app.models.shootinginfer import ShootingInference
 from app.utils.model_utils import get_save_path
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 router = APIRouter()
 
-DATA_DIR = Path("../data/game_record")
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data" / "game_record"
+MODEL_DIR = BASE_DIR / "data" / "laser"
 GAME_RECORD_SP = None
-
 
 def load_all_game_records() -> pd.DataFrame:
     """
@@ -82,9 +87,9 @@ def load_game_record(game_id: str) -> pd.DataFrame:
 
     return session_df.reset_index(drop=True)
 
-def calculate_coi_mr_std(shooting_result: list):
+def calculate_result(shooting_result: list) -> Tuple[List[float], float, List[float], str]:
     """
-    Calculate COI (Center of Impact), Mean Radius, and standard deviations.
+    Calculate COI (Center of Impact), Mean Radius, standard deviations and skill level.
 
     This function computes statistical shooting accuracy metrics based on
     a list of `ShootingResult` objects.
@@ -102,30 +107,76 @@ def calculate_coi_mr_std(shooting_result: list):
             List of shooting results containing impact coordinates.
 
     Returns:
-        Tuple[List[float], float, List[float]]:
+        Tuple[List[float], float, List[float], str]:
             - coi: [mean_x, mean_y]
             - mean_radius: Mean radial distance from COI
             - std: [sigma_x, sigma_y]
+            - skill_level: str ("초급", "중급", "고급")
     """
-    x_vals = np.array([shot.pointX for shot in shooting_result])
-    y_vals = np.array([shot.pointY for shot in shooting_result])
+    x_vals = np.array([shot.pointX for shot in shooting_result], dtype=np.float64)
+    y_vals = np.array([shot.pointY for shot in shooting_result], dtype=np.float64)
+    points = np.column_stack((x_vals, y_vals))
 
     # COI
     coi_x = float(np.mean(x_vals))
     coi_y = float(np.mean(y_vals))
-    coi = [float(np.mean(x_vals)), float(np.mean(y_vals))]
+    old_coi = np.array([coi_x, coi_y])
 
-    r = np.sqrt((x_vals - coi_x)**2 + (y_vals - coi_y)**2)
-    mean_radius = float(np.mean(r))
+    distances = np.linalg.norm(points - old_coi, axis=1)
+    sigma = np.std(distances, ddof=0)
+    threshold = sigma * 2
 
-    std_x = float(np.std(x_vals, ddof=0))
-    std_y = float(np.std(y_vals, ddof=0))
-    std = [std_x, std_y]
+    valid_mask = distances <= threshold
+    valid_points = points[valid_mask]
+    print(f"valid points len: {len(valid_points)}")
 
-    return coi, mean_radius, std
+    if len(valid_points) < 5:
 
-def create_analysis():
-    """Analysis using ML model.
+        mean_radius = float(np.mean(distances))
+        std = [float(np.std(x_vals, ddof=0)), float(np.std(y_vals, ddof=0))]
+        skill_level = "입문"
+        print(f"skill_level: {skill_level}")
+
+        return old_coi.tolist(), mean_radius, std, skill_level, threshold
+    
+    else:
+        filtered_points = valid_points
+
+        refined_coi_x = float(np.mean(filtered_points[:, 0]))
+        refined_coi_y = float(np.mean(filtered_points[:, 1]))
+        coi = [refined_coi_x, refined_coi_y]
+
+        r = np.sqrt(
+            (filtered_points[:, 0] - refined_coi_x) ** 2 +
+            (filtered_points[:, 1] - refined_coi_y) ** 2
+        )
+        mean_radius = float(np.mean(r))
+
+        std_x = float(np.std(filtered_points[:, 0], ddof=0))
+        std_y = float(np.std(filtered_points[:, 1], ddof=0))
+        std = [std_x, std_y]
+
+        total_score = sum([shot.score for shot in shooting_result])
+        if total_score >= 100:
+            skill_level = "완벽"
+        elif total_score >= 95:
+            skill_level = "고급"
+        elif total_score >= 80:
+            skill_level = "중급"
+        else:
+            skill_level = "초급"
+        print(f"skill_level: {skill_level}")
+
+        return coi, mean_radius, std, skill_level, threshold
+
+def create_analysis(
+    shooting_result: list,
+    coi: list,
+    mean_radius: float,
+    std: list,
+) -> Tuple[Dict[str, float], List[MajorError]]:
+    """
+    Analysis using ML model.
 
     This function processes the shooting analysis data using
     a machine learning model to extract relevant metrics and
@@ -135,32 +186,29 @@ def create_analysis():
         Not yet
 
     Returns:
-        Tuple[str, Dict[str, float], List[MajorError]]: A tuple containing:
-            - skill_level: A string representing the assessed skill level.
+        Tuple[Dict[str, float], List[MajorError]]: A tuple containing:
             - error_probabilities: A dictionary with error types as keys and their probabilities as values.
             - major_error_list: A list of MajorError instances representing significant errors detected.
     """
-    skill_level = "Beginner"
-    error_probabilities = {
-        "sample_error_probability1": 0.24,
-        "sample_error_probability2": 0.34,
-        "sample_error_probability3": 0.44,
-    }
-    major_error_list = [
-        MajorError(major_error_name="Sample", confidence=0.85),
-        MajorError(major_error_name="Example", confidence=0.75)
-    ]
+    
+    if len(shooting_result) != 10:
+        return {}, []
 
-    return skill_level, error_probabilities, major_error_list
+    model_path = str(MODEL_DIR / "shooting_model_v7.pkl")
+    feature_path = str(MODEL_DIR / "feature_columns_v7.pkl")
+    model = ShootingInference(
+        model_path=model_path,
+        feature_path=feature_path,
+    )
+    error_probabilities, major_error_list = model.predict(shooting_result, coi, mean_radius, std)
+    print("major_error_list:", major_error_list)
+    
+    return error_probabilities, major_error_list
 
 def create_answers(
     skill_level: str,
-    error_probabilities: dict,
     major_error: list,
-    coi: list,
-    mean_radius: float,
-    std: list,
-):
+) -> Tuple[str, str]:
     """Generate analysis and recommendation texts using an LLM.
 
     This function invokes a Large Language Model (LLM) to generate
@@ -175,93 +223,87 @@ def create_answers(
             - analysis_text: Generated analysis explanation.
             - recommendation_text: Generated recommendation or drill text.
     """
-    dx = coi[0] - 0.5
-    dy = coi[1] - 0.5
+    print("len major_error:", len(major_error))
+    if len(major_error) == 0:
+        analysis_text = "세션 분석에는 10발 사격 결과가 필요합니다."
+        recommendation_text = "세션 분석에는 10발 사격 결과가 필요합니다."
 
-    if abs(dx) < 0.03 and abs(dy) < 0.03:
-        direction = "중앙"
-    elif dx < 0 and dy < 0:
-        direction = "좌상(10~11시)"
-    elif dx < 0 and dy > 0:
-        direction = "좌하(7~8시)"
-    elif dx > 0 and dy < 0:
-        direction = "우상(1~2시)"
     else:
-        direction = "우하(4~5시)"
+        major_error_text = "\n".join(
+            f"- {e.major_error_name}"
+            for e in major_error
+        )
+        print("major error text:", major_error_text)
 
-    client = AzureOpenAI(
-        azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_key=os.environ["AZURE_OPENAI_API_KEY"],
-        azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT"],
-        api_version="2025-03-01-preview",
-    )
+        client = AzureOpenAI(
+            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+            api_key=os.environ["AZURE_OPENAI_API_KEY"],
+            azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT"],
+            api_version="2025-03-01-preview",
+        )
 
-    # ---- prompt 구성 ----
-    system_prompt = ("당신은 권총 사격을 지도하는 전문 코치이자 탄착군 분석 전문가이다. "
-        "다음 사격 진단 기준을 바탕으로 분석하며, 오류명을 제외한 나머지 답변은 한국어로만 작성한다.\n\n"
-                
-        "[편향(COI) 진단 기준]\n"
-        "- 7시 방향: Jerking(급격한 방아쇠 당김) / 트리거 속도 유지 필요\n"
-        "- 3시/9시 방향: 방아쇠 손가락 위치 불량 / 손가락 배치 점검 필요\n"
-        "- 1시 방향: Heeling(손바닥 밀어올림) / 그립 압력 및 손목 고정 필요\n"
-        "- 3시 방향(측면): Thumbing(엄지로 프레임 밀어냄) / 엄지 위치 고정 필요\n"
-        "- 5시 방향: Lobstering(그립 과도한 압력) / 일정 그립 압력 유지 필요\n\n"
-        
-        "[분산(MR/Std) 진단 기준]\n"
-        "- 상하 분산이 큰 경우(Vertical Variance): 호흡 불안정 및 어깨 긴장 / 어깨 이완 및 발사 순간 호흡 정지 필요\n"
-        "- 좌우 분산이 큰 경우(Horizontal Variance): 자세 및 그립 비대칭 / 스탠스 안정화 및 대칭적 그립 압력 필요\n"
-        "- 전반적 분산이 큰 경우(Scattering): 다수 문제 복합 / 조준 및 트리거 컨트롤 기본기 재정렬 필요\n\n"
-        
-        "설명은 간결해야 하며, 수치 값(좌표, 표준편차 등)은 절대 직접 언급하지 말고 그 의미와 경향만 설명한다. "
-        "공백 포함 300자 이내로 제한하며, 두 개의 단락(분석/권고)으로 구성한다."
-    )
+        system_prompt = (
+            "당신은 권총 사격을 지도하는 전문 코치이다. "
+            "이미 분석된 사격 오류를 바탕으로 원인 설명과 교정 조언만 제공한다.\n\n"
 
-    user_prompt = f"""
-    사격 통계 데이터:
-    - 탄착 중심 편향 방향: {direction}
-    - 평균 반경 (MR): {mean_radius:.4f}
-    - 탄착 분산: σx={std[0]:.4f}, σy={std[1]:.4f}
+            "숙련도별 코칭 전략:\n"
+            "- 초급: 안전과 가장 기초적인 그립, 트리거 조작의 원리를 친절하고 상세하게 설명합니다. \n"
+            "- 중급: 동작의 일관성과 정밀도를 높이는 데 집중하며, 잘못된 습관을 교정하는 기술적 조언을 제공합니다. \n"
+            "- 고급: 미세한 근육 조절, 호흡의 완성도, 심리적 안정을 강조하며 전문적인 용어를 곁들여 핵심만 전달합니다. \n\n"
 
-    지시 사항:
-    1. 위 데이터를 시스템 지침의 '진단 기준'에 대입하여 핵심 문제를 1~2개 도출하라.
-    2. COI 편향 방향은 위에 주어진 값을 그대로 사용하고 재판단하지 마라.
-    3. COI의 편향 방향(시계 방향 기준)과 분산 비율(σx/σy)에 따른 문제점을 각각 설명하라.
-    4. 수치와 좌표는 절대 언급하지 말고 '경향성'으로만 표현하라.
-    5. 분석 문단과 교정 권고 문단으로 나누어 작성하라.
-    """
-    # Shooter skill level: {skill_level}
+            "절대 규칙:\n"
+            "- 사격 오류를 새로 추론하거나 재분류하지 마라\n"
+            "- 입력으로 주어진 '주요 오류'만을 근거로 설명하라\n"
+            "- 수치, 좌표, 방향, 확률, 신뢰도라는 표현을 절대 사용하지 마라\n"
+            "- 오류명은 영문 그대로 사용하고, 그 외 설명은 한국어로 작성하라\n"
+            "- 이모지를 사용하지 마라\n"
+            "- 모든 문장은 '-합니다'체나 '-됩니다'체를 사용하라\n\n"
 
-    # ML 예측 오류 유형 및 확률:
-    # {error_probabilities}
+            "출력 형식:\n"
+            "- 두 개의 단락으로 구성하고 각 단락명과 내용은 줄바꿈으로 구분 (분석 / 피드백)\n"
+            "- 전체 200자 이내\n"
+        )
 
-    # 주요 오류:
-    # {major_error}
+        user_prompt = f"""
+        [유저 정보]
+        숙련도: {skill_level}
 
-    response = client.responses.create(
-        model=os.environ["AZURE_OPENAI_DEPLOYMENT"],
-        input=[
-            {
-                "role": "system",
-                "content": system_prompt,
-            },
-            {
-                "role": "user",
-                "content": user_prompt,
-            },
-        ],
-        # temperature=0.4,
-        max_output_tokens=300,
-    )
+        [사격 분석 결과 - 주요 오류]
+        {major_error_text}
 
-    full_text = response.output_text.strip()
-    print("LLM full_text\n", full_text)
+        [지시 사항]
+        1. 위 주요 오류가 사격 동작에서 어떻게 발생했는지 설명하라.
+        2. 오류들이 서로 어떤 연관성을 가지는지 간략히 서술하라.
+        3. 각 오류를 교정하기 위한 실질적인 훈련 포인트를 제시하라.
+        4. 분석 단락과 피드백 단락으로 나누어 작성하라.
+        5. 수치, 방향, 좌표, 확률은 절대 언급하지 마라.
+        """
 
-    # ---- 간단 분리 (또는 JSON 출력으로 바꿔도 됨) ----
-    if "\n\n" in full_text:
-        analysis_text, recommendation_text = full_text.split("\n\n", 1)
-    else:
-        analysis_text = full_text
-        recommendation_text = ""
+        response = client.responses.create(
+            model=os.environ["AZURE_OPENAI_DEPLOYMENT"],
+            input=[
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": user_prompt,
+                },
+            ],
+            max_output_tokens=200,
+        )
+
+        full_text = response.output_text.strip()
+        print("LLM full_text\n", full_text)
+
+        if "\n\n" in full_text:
+            analysis_text, recommendation_text = full_text.split("\n\n", 1)
+            analysis_text = analysis_text.split("분석", 1)[-1].strip()
+            recommendation_text = recommendation_text.split("피드백", 1)[-1].strip()
+        else:
+            analysis_text = full_text
+            recommendation_text = ""
 
     return analysis_text, recommendation_text
 
@@ -270,7 +312,7 @@ GAME_RECORD_SP = load_all_game_records()
 
 
 @router.get("/sessions", response_model=List[str])
-async def get_sessions():
+async def get_sessions() -> List[str]:
     """
     Retrieve all available shooting session IDs.
 
@@ -301,7 +343,7 @@ async def get_sessions():
 
 
 @router.get("/process", response_model=ShootingAnalysisResponse, responses={400: {"model": ErrorResponse}})
-async def process_analysis(request: Request, game_id: str):
+async def process_analysis(request: Request, game_id: str) -> ShootingAnalysisResponse:
     """
     Process shooting analysis for a specific session.
 
@@ -342,34 +384,63 @@ async def process_analysis(request: Request, game_id: str):
         ]
         print("shooting_result[0]:", shooting_result[0])
 
-        coi, mean_radius, std = calculate_coi_mr_std(shooting_result)
+        coi, mean_radius, std, skill_level, threshold = calculate_result(shooting_result)
 
-        skill_level, error_probabilities, major_error = create_analysis()
-        
-        analysis_text, recommend_text = create_answers(
-            skill_level=skill_level,
-            error_probabilities=error_probabilities,
-            major_error=major_error,
-            coi=coi,
-            mean_radius=mean_radius,
-            std=std,
-        )
+        if skill_level == "완벽":
+            return ShootingAnalysisResponse(
+                game_id=game_id,
+                user_id="user_001",
+                dominant_hand="right",
+                shooting_result=shooting_result,
+                coi=coi,
+                mean_radius=mean_radius,
+                std=std,
+                ttf=6.42,
+                skill_level=skill_level,
+                threshold=threshold,
+                error_probabilities={},
+                major_error=[],
+                analysis_text="완벽한 사격입니다! 모든 샷이 중심에 가깝고 일관된 결과를 보여줍니다. 현재의 그립과 자세를 유지하면서, 정기적으로 연습하여 이 수준을 지속적으로 유지하는 것을 권장드립니다.",
+                recommend_text="현재의 훈련 루틴을 유지하되, 가끔씩 다른 거리나 조건에서 연습하여 다양한 상황에서도 완벽한 사격이 가능하도록 준비하는 것을 추천드립니다.",
+            )
+        elif skill_level == "입문":
+            return ShootingAnalysisResponse(
+                game_id=game_id,
+                user_id="user_001",
+                dominant_hand="right",
+                shooting_result=shooting_result,
+                coi=coi,
+                mean_radius=mean_radius,
+                std=std,
+                ttf=6.42,
+                skill_level=skill_level,
+                threshold=threshold,
+                error_probabilities={},
+                major_error=[],
+                analysis_text="입문 단계입니다. 샷들이 중심에서 멀리 떨어져 있고, 일관성이 부족한 모습입니다. 그립과 자세를 점검하고, 기본적인 트리거 조작 연습에 집중하는 것을 권장드립니다.",
+                recommend_text="기본적인 사격 자세와 그립을 교정하는 드릴을 추천드립니다. 예를 들어, 벽에 총을 대고 그립을 연습하거나, 트리거 조작을 손가락만으로 연습하는 드릴이 도움이 될 수 있습니다.",
+            )
+        else:
+            print(5)
+            error_probabilities, major_error = create_analysis(shooting_result, coi, mean_radius, std)
+            analysis_text, recommend_text = create_answers(skill_level, major_error)
 
-        return ShootingAnalysisResponse(
-            game_id=game_id,
-            user_id="user_001",
-            dominant_hand="right",
-            shooting_result=shooting_result,
-            coi=coi,
-            mean_radius=mean_radius,
-            std=std,
-            ttf=6.42,
-            skill_level=skill_level,
-            error_probabilities=error_probabilities,
-            major_error=major_error,
-            analysis_text=analysis_text,
-            recommend_text=recommend_text,
-        )
+            return ShootingAnalysisResponse(
+                game_id=game_id,
+                user_id="user_001",
+                dominant_hand="right",
+                shooting_result=shooting_result,
+                coi=coi,
+                mean_radius=mean_radius,
+                std=std,
+                ttf=6.42,
+                skill_level=skill_level,
+                threshold=threshold,
+                error_probabilities=error_probabilities,
+                major_error=major_error,
+                analysis_text=analysis_text,
+                recommend_text=recommend_text,
+            )
         
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"탄착 분석 중 오류가 발생했습니다: {str(e)}")

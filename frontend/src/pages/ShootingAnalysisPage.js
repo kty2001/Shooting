@@ -86,21 +86,23 @@ const ShootingAnalysisPage = () => {
               {/* 왼쪽 영역: 타겟 및 결과 수치 */}
               <div className="flex flex-col items-center">
                 {/* 타겟 시각화 (AnalysisResultDisplay 내부에서 처리되거나 여기서 대체) */}
-                <div className="relative w-64 h-64 border-2 border-black rounded-full flex items-center justify-center mb-6">
-                  <div className="w-48 h-48 border border-black rounded-full flex items-center justify-center">
-                    <div className="w-32 h-32 border border-black rounded-full flex items-center justify-center">
-                      <div className="w-16 h-16 bg-black rounded-full"></div>
+                <div className="relative w-80 h-80 border-2 border-black rounded-full flex items-center justify-center mb-6">
+                  <div className="w-64 h-64 border border-black rounded-full flex items-center justify-center">
+                    <div className="w-48 h-48 border border-black rounded-full flex items-center justify-center">
+                      <div className="w-32 h-32 border border-black rounded-full flex items-center justify-center">
+                        <div className="w-16 h-16 bg-black rounded-full"></div>
+                      </div>
                     </div>
                   </div>
 
                   {/* 예시 탄착군 (데이터가 있을 때 매핑) */}
-                  {result && result.shooting_result.map((shot) => (
+                  {result.shooting_result && result.shooting_result.map((shot) => (
                     <div
                       key={shot.nth}
                       className="absolute w-2 h-2 rounded-full"
                       style={{
-                        left: `${shot.pointX * 256}px`,
-                        top: `${shot.pointY * 256}px`,
+                        left: `${shot.pointX * 320}px`,
+                        top: `${shot.pointY * 320}px`,
                         backgroundColor: shot.color,
                         transform: "translate(-50%, -50%)",
                         boxShadow: `0 0 4px ${shot.color}`,
@@ -110,18 +112,33 @@ const ShootingAnalysisPage = () => {
                   ))}
 
                   {/* COI 표시 (X 마커) */}
-                  {result && (
+                  {result.shooting_result && (
                     <div
                       className="absolute text-red-500 font-bold text-xl select-none"
                       style={{
-                        left: `${result.coi[0] * 256}px`,
-                        top: `${result.coi[1] * 256}px`,
+                        left: `${result.coi[0] * 320}px`,
+                        top: `${result.coi[1] * 320}px`,
                         transform: "translate(-50%, -50%)",
                         zIndex: 20,
                       }}
                     >
                       ✕
                     </div>
+                  )}
+
+                  {/* 임계값 영역 */}
+                  {result.coi && result.threshold && (
+                    <div
+                      className="absolute rounded-full border-2 border-red-400 border-dashed pointer-events-none"
+                      style={{
+                        width: `${result.threshold * 2 * 320}px`,
+                        height: `${result.threshold * 2 * 320}px`,
+                        left: `${result.coi[0] * 320}px`,
+                        top: `${result.coi[1] * 320}px`,
+                        transform: "translate(-50%, -50%)",
+                        zIndex: 15,
+                      }}
+                    />
                   )}
                 </div>
 
@@ -150,39 +167,39 @@ const ShootingAnalysisPage = () => {
               {/* 오른쪽 영역: 분석 및 피드백 */}
               <div className="flex flex-col gap-6 h-full">
                 <div className="border-2 border-black rounded-2xl p-6 flex-1">
-                  {/* Error Analysis Box */}
-                  {result && (
-                    <>
-                      <h3 className="text-2xl font-bold mb-3 text-black">
-                        Error Analysis Box
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed">
-                        주요 오류는{" "}
-                        <span className="font-bold">
-                          {result.major_error[0].major_error_name}
-                        </span>
-                        입니다.
-                        (신뢰도: {(result.major_error[0].confidence * 100).toFixed(0)}%)<br />
-                        {result.analysis_text}
-                      </p>
-                    </>
+                  <h3 className="text-2xl font-bold mb-3 text-black">Error Analysis Box</h3>
+                  {result.shooting_result && result.shooting_result.length === 10 ? (
+                    <p className="text-gray-700 leading-relaxed">
+                      {result.major_error && result.major_error.length > 0 && (
+                        <>
+                          주요 오류는{" "}
+                          <span className="font-bold">
+                            {result.major_error[0].major_error_name}
+                          </span>{" "}
+                          입니다.
+                          (신뢰도: {(result.major_error[0].confidence * 100).toFixed(0)}%)
+                          <br />
+                        </>
+                      )}
+                      {result.analysis_text}
+                    </p>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500 font-medium">
+                      세션 분석에는 10발 사격 결과가 필요합니다.
+                    </div>
                   )}
                 </div>
 
-                {/* Feedback Box */}
                 <div className="border-2 border-black rounded-2xl p-6 flex-1">
-                  {result && (
-                    <>
-                      <h3 className="text-2xl font-bold mb-3 text-black">
-                        Feedback Box
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed">
-                        {/* 추천 드릴:{" "}
-                        <span className="font-bold"> */}
-                          {result.recommend_text}
-                        {/* </span> */}
-                      </p>
-                    </>
+                  <h3 className="text-2xl font-bold mb-3 text-black">Feedback Box</h3>
+                  {result.shooting_result && result.shooting_result.length === 10 ? (
+                    <p className="text-gray-700 leading-relaxed">
+                      {result.recommend_text}
+                    </p>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500 font-medium">
+                      세션 분석에는 10발 사격 결과가 필요합니다.
+                    </div>
                   )}
                 </div>
               </div>

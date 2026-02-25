@@ -65,6 +65,7 @@ class ShootingAnalysisResponse(BaseModel):
     std: List[float]
     ttf: float
     skill_level: str
+    threshold: float
     error_probabilities: Dict[str, float]
     major_error: List[MajorError]
     analysis_text: str

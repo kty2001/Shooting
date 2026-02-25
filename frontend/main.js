@@ -16,8 +16,10 @@ function startServer() {
   if (fs.existsSync(exePath)) {
     const out = fs.createWriteStream(path.join(__dirname, 'server_out.log'));
     const err = fs.createWriteStream(path.join(__dirname, 'server_err.log'));
+
     serverProcess = spawn(exePath, [], {
       detached: true,
+      env,
       stdio: ['ignore', 'pipe', 'pipe']
     });
     serverProcess.stdout.pipe(out);
