@@ -4,47 +4,53 @@ import { FaImage, FaBullseye, FaWaveSquare } from 'react-icons/fa';
 
 const Sidebar = () => {
   return (
-    <nav className="w-[240px] bg-surface p-md shadow-md">
-      <h3 className="text-textSecondary text-sm mb-md pl-sm">메인 메뉴</h3>
-      <NavLink 
-        to="/" 
+    <nav className="w-[220px] bg-background border-r border-border p-md flex flex-col gap-xs">
+      <p className="text-textMuted text-xs uppercase tracking-widest mb-sm pl-sm">메인 메뉴</p>
+      <NavLink
+        to="/"
         end
         className={({ isActive }) => `
-          flex items-center p-md rounded-md mb-sm text-textPrimary
-          transition-colors duration-fast hover:bg-white/5
-          ${isActive ? 'bg-primary text-white' : ''}
+          flex items-center gap-md px-sm py-[10px] rounded-md text-sm font-medium
+          transition-colors duration-fast
+          ${isActive
+            ? 'bg-primary-600 text-white shadow-blue'
+            : 'text-textSecondary hover:bg-surface hover:text-textPrimary'}
         `}
       >
-        <FaImage className="mr-md text-lg" />
+        <FaImage className="text-base shrink-0" />
         홈
       </NavLink>
 
-      <h3 className="text-textSecondary text-sm mb-md pl-sm">분석 메뉴</h3>
-      <NavLink 
+      <p className="text-textMuted text-xs uppercase tracking-widest mb-sm pl-sm mt-md">분석 메뉴</p>
+      <NavLink
         to="/shootinganalysis"
         className={({ isActive }) => `
-          flex items-center p-md rounded-md mb-sm text-textPrimary
-          transition-colors duration-fast hover:bg-white/5
-          ${isActive ? 'bg-primary text-white' : ''}
+          flex items-center gap-md px-sm py-[10px] rounded-md text-sm font-medium
+          transition-colors duration-fast
+          ${isActive
+            ? 'bg-primary-600 text-white shadow-blue'
+            : 'text-textSecondary hover:bg-surface hover:text-textPrimary'}
         `}
       >
-        <FaBullseye className="mr-md text-lg" />
+        <FaBullseye className="text-base shrink-0" />
         탄착 분석
       </NavLink>
 
-      <NavLink 
+      <NavLink
         to="/seriesanalysis"
         className={({ isActive }) => `
-          flex items-center p-md rounded-md mb-sm text-textPrimary
-          transition-colors duration-fast hover:bg-white/5
-          ${isActive ? 'bg-primary text-white' : ''}
+          flex items-center gap-md px-sm py-[10px] rounded-md text-sm font-medium
+          transition-colors duration-fast
+          ${isActive
+            ? 'bg-primary-600 text-white shadow-blue'
+            : 'text-textSecondary hover:bg-surface hover:text-textPrimary'}
         `}
       >
-        <FaWaveSquare className="mr-md text-lg" />
+        <FaWaveSquare className="text-base shrink-0" />
         추이 분석
       </NavLink>
     </nav>
   );
 };
 
-export default Sidebar; 
+export default Sidebar;

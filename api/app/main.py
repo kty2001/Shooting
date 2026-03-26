@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from dotenv import load_dotenv
 
-from app.routers import shootinganalysis
+from app.routers import shooting_get, shooting_post
 
 load_dotenv()
 
@@ -44,7 +44,8 @@ app.add_middleware(
 )
 
 # 라우터 등록
-app.include_router(shootinganalysis.router, prefix="/api/shootinganalysis", tags=["Shooting Analysis"])
+app.include_router(shooting_get.router,  prefix="/api/shootinganalysis", tags=["Shooting GET"])
+app.include_router(shooting_post.router, prefix="/api/shootinganalysis", tags=["Shooting POST"])
 
 # 정적 파일 서빙 (처리된 이미지 등을 저장)
 os.makedirs(UPLOADS_DIR, exist_ok=True)

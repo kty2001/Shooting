@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Dict, List, Tuple, Optional
+from datetime import datetime
 
 
 # class ImageResponse(BaseModel):
@@ -74,4 +75,81 @@ class ShootingAnalysisResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """에러 응답 스키마"""
-    detail: str 
+    detail: str
+
+
+class ShootingDataRecord(BaseModel):
+    """분석용 사격 데이터 레코드 (shooting_analysis_data 테이블)"""
+    hd_id: str
+    user_id: str
+    nth: int
+    score: float
+    point_x: float
+    point_y: float
+    shot_time: float
+    distance: int
+    create_at: Optional[str] = None
+
+
+class SyncDataRequest(BaseModel):
+    """원천 데이터 동기화 요청"""
+    records: List[ShootingDataRecord]
+
+
+class SyncDataResponse(BaseModel):
+    """동기화 응답"""
+    inserted: int
+    skipped: int
+    message: str
+
+
+class SessionDataResponse(BaseModel):
+    """세션 데이터 조회 응답"""
+    user_id: str
+    session_id: Optional[str]
+    total_records: int
+    records: List[ShootingDataRecord]
+
+
+class ShotResultItem(BaseModel):
+    """shooting_result 리스트의 개별 발 데이터"""
+    hd_id: str
+    nth: int
+    score: Optional[float] = None
+    point_x: float                   # save_record_dt NOT NULL
+    point_y: float                   # save_record_dt NOT NULL
+    distance: Optional[float] = None
+    shot_time: Optional[float] = None
+    direction: Optional[str] = None
+    color: Optional[str] = None
+    user_id: Optional[str] = None
+    image_path: Optional[str] = None
+
+
+class SessionSyncRequest(BaseModel):
+    """세션 단위 동기화 요청 (헤더 + 발별 데이터)"""
+    id: str
+    game_id: Optional[str] = None
+    mst_idx: Optional[int] = 0
+    user_id: Optional[str] = None
+    shooting_point_tot: Optional[float] = 0
+    shooting_point_best: Optional[float] = 0
+    shooting_point_worst: Optional[float] = 0
+    shooting_point_avg: Optional[float] = 0
+    shooting_point_tot_by_perfect: Optional[float] = 0
+    shooting_count: Optional[int] = 0
+    total_shooting_time: Optional[float] = 0
+    disqualified: Optional[int] = 0
+    grade: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    video_path: Optional[str] = None
+    shooting_result: List[ShotResultItem]
+
+
+class SessionSyncResponse(BaseModel):
+    """세션 동기화 응답"""
+    hd_inserted: int
+    hd_skipped: int
+    dt_inserted: int
+    message: str

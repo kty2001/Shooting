@@ -1,0 +1,34 @@
+{
+  "id": "session_007",
+  "game_id": "game_007",
+  "user_id": "user_003",
+  "shooting_point_tot": 95.5,
+  "shooting_point_best": 10.0,
+  "shooting_point_worst": 8.5,
+  "shooting_point_avg": 9.55,
+  "shooting_point_tot_by_perfect": 0.955,
+  "shooting_count": 10,
+  "total_shooting_time": 27.3,
+  "disqualified": 0,
+  "grade": "고급",
+  "shooting_result": [
+    {
+      "hd_id": "session_007",
+      "nth": 1,
+      "score": 10.0,
+      "point_x": 0.02,
+      "point_y": -0.01,
+      "distance": 10,
+      "shot_time": 2.5
+    },
+    {
+      "hd_id": "session_007",
+      "nth": 2,
+      "score": 9.5,
+      "point_x": -0.01,
+      "point_y": 0.02,
+      "distance": 10,
+      "shot_time": 2.8
+    }
+  ]
+}

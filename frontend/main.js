@@ -12,10 +12,16 @@ let serverProcess = null;
 
 const exePath = path.join(__dirname, 'server', 'Shooting_AI_Analysis.exe');
 
+// const dotenv = require('dotenv');
+// dotenv.config({
+//   path: path.join(__dirname, 'electron.env')
+// });
+
 function startServer() {
   if (fs.existsSync(exePath)) {
     const out = fs.createWriteStream(path.join(__dirname, 'server_out.log'));
     const err = fs.createWriteStream(path.join(__dirname, 'server_err.log'));
+
 
     serverProcess = spawn(exePath, [], {
       detached: true,

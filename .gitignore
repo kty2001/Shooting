@@ -2,6 +2,7 @@
 .git
 .venv
 .env
+.claude
 data
 node_modules
 build
@@ -13,8 +14,10 @@ api/images
 api/results
 api/uploads
 api/models
+api/app/utils/db.py
 
 # frontend
 frontend/assets
 frontend/public
 frontend/server
+frontend/electron.env
